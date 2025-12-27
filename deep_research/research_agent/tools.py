@@ -1,16 +1,61 @@
 """Research Tools.
 
 This module provides search and content processing utilities for the research agent,
-using Tavily for URL discovery and fetching full webpage content.
+using DuckDuckGo for free web search (or Tavily if you have an API key).
 """
 
 import httpx
 from langchain_core.tools import InjectedToolArg, tool
 from markdownify import markdownify
-from tavily import TavilyClient
 from typing_extensions import Annotated, Literal
+from bs4 import BeautifulSoup
+import urllib.parse
 
-tavily_client = TavilyClient()
+# Tavily client (commented out - requires API key)
+# from tavily import TavilyClient
+# tavily_client = TavilyClient()
+
+
+def duckduckgo_search(query: str, max_results: int = 5) -> list[dict]:
+    """Free web search using DuckDuckGo HTML search.
+
+    Args:
+        query: Search query
+        max_results: Maximum number of results to return
+
+    Returns:
+        List of search results with title and url
+    """
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+    }
+
+    try:
+        # DuckDuckGo HTML search (no API key needed)
+        search_url = f"https://html.duckduckgo.com/html/?q={urllib.parse.quote(query)}"
+        response = httpx.get(search_url, headers=headers, timeout=10.0, follow_redirects=True)
+        response.raise_for_status()
+
+        # Parse HTML results
+        soup = BeautifulSoup(response.text, 'html.parser')
+        results = []
+
+        for result in soup.find_all('div', class_='result')[:max_results]:
+            title_elem = result.find('a', class_='result__a')
+            if title_elem:
+                title = title_elem.get_text(strip=True)
+                url = title_elem.get('href', '')
+
+                if url and title:
+                    results.append({
+                        'title': title,
+                        'url': url
+                    })
+
+        return results
+    except Exception as e:
+        print(f"DuckDuckGo search error: {e}")
+        return []
 
 
 def fetch_webpage_content(url: str, timeout: float = 10.0) -> str:
@@ -45,7 +90,8 @@ def tavily_search(
 ) -> str:
     """Search the web for information on a given query.
 
-    Uses Tavily to discover relevant URLs, then fetches and returns full webpage content as markdown.
+    Uses DuckDuckGo (free) to discover relevant URLs, then fetches and returns full webpage content as markdown.
+    To use Tavily instead, uncomment the tavily_client lines at the top and use the commented code below.
 
     Args:
         query: Search query to execute
@@ -55,35 +101,47 @@ def tavily_search(
     Returns:
         Formatted search results with full webpage content
     """
-    # Use Tavily to discover URLs
-    search_results = tavily_client.search(
-        query,
-        max_results=max_results,
-        topic=topic,
-    )
+    # === OPTION 1: DuckDuckGo (FREE) - Currently active ===
+    search_results = duckduckgo_search(query, max_results=max_results)
+
+    # === OPTION 2: Tavily (requires API key) - Commented out ===
+    # search_results = tavily_client.search(
+    #     query,
+    #     max_results=max_results,
+    #     topic=topic,
+    # ).get("results", [])
 
     # Fetch full content for each URL
     result_texts = []
-    for result in search_results.get("results", []):
-        url = result["url"]
-        title = result["title"]
+    for result in search_results:
+        # DuckDuckGo format
+        url = result.get("url")
+        title = result.get("title")
 
-        # Fetch webpage content
-        content = fetch_webpage_content(url)
+        # Tavily format (if using Tavily, the dict keys are the same)
+        # url = result.get("url")
+        # title = result.get("title")
 
-        result_text = f"""## {title}
+        if url and title:
+            # Fetch webpage content
+            content = fetch_webpage_content(url)
+
+            result_text = f"""## {title}
 **URL:** {url}
 
 {content}
 
 ---
 """
-        result_texts.append(result_text)
+            result_texts.append(result_text)
 
     # Format final response
-    response = f"""🔍 Found {len(result_texts)} result(s) for '{query}':
+    if result_texts:
+        response = f"""🔍 Found {len(result_texts)} result(s) for '{query}':
 
 {chr(10).join(result_texts)}"""
+    else:
+        response = f"🔍 No results found for '{query}'. Try a different search query."
 
     return response
 

@@ -4,7 +4,12 @@ This module creates a deep research agent with custom tools and prompts
 for conducting web research with strategic thinking and context management.
 """
 
+import os
 from datetime import datetime
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 from langchain.chat_models import init_chat_model
 from langchain_google_genai import ChatGoogleGenerativeAI
@@ -44,11 +49,26 @@ research_sub_agent = {
     "tools": [tavily_search, think_tool],
 }
 
-# Model Gemini 3 
+# Model Gemini 3
 # model = ChatGoogleGenerativeAI(model="gemini-3-pro-preview", temperature=0.0)
 
 # Model Claude 4.5
-model = init_chat_model(model="anthropic:claude-sonnet-4-5-20250929", temperature=0.0)
+# model = init_chat_model(model="anthropic:claude-sonnet-4-5-20250929", temperature=0.0)
+
+# OpenRouter Free Model (openai/gpt-oss-120b:free)
+model = init_chat_model(
+    model="openai/gpt-oss-120b:free",
+    model_provider="openai",
+    temperature=0.0,
+    api_key=os.getenv("OPENAI_API_KEY"),
+    base_url="https://openrouter.ai/api/v1",
+    model_kwargs={
+        "extra_headers": {
+            "HTTP-Referer": "https://github.com/alanxu/deepagents-quickstarts",
+            "X-Title": "Deep Research Agent",
+        }
+    },
+)
 
 # Create the agent
 agent = create_deep_agent(
