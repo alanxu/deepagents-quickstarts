@@ -17,13 +17,50 @@ Install packages:
 uv sync
 ```
 
-Set your API keys in your environment:
+## Model Configuration
+
+Configure your model provider by editing `.env` file (copy from `.env.example`):
 
 ```bash
-export ANTHROPIC_API_KEY=your_anthropic_api_key_here  # Required for Claude model
-export GOOGLE_API_KEY=your_google_api_key_here        # Required for Gemini model ([get one here](https://ai.google.dev/gemini-api/docs))
-export TAVILY_API_KEY=your_tavily_api_key_here        # Required for web search ([get one here](https://www.tavily.com/)) with a generous free tier
-export LANGSMITH_API_KEY=your_langsmith_api_key_here  # [LangSmith API key](https://smith.langchain.com/settings) (free to sign up)
+cp .env.example .env
+```
+
+The agent supports three model providers that you can switch between by setting `MODEL_PROVIDER` in `.env`:
+
+### Option 1: OpenRouter (Free - Default)
+```bash
+MODEL_PROVIDER=openrouter
+OPENROUTER_API_KEY=your_key_here
+OPENROUTER_MODEL=openai/gpt-oss-120b:free
+```
+- ✅ **Free model** available (`openai/gpt-oss-120b:free`)
+- Get API key at: https://openrouter.ai/
+
+### Option 2: Ollama (Local/Free)
+```bash
+MODEL_PROVIDER=ollama
+OLLAMA_MODEL=llama3.2
+OLLAMA_BASE_URL=http://localhost:11434
+```
+- ✅ **Completely free** - runs locally
+- Install: https://ollama.ai/
+- Make sure Ollama is running: `ollama serve`
+- Pull a model: `ollama pull llama3.2`
+
+### Option 3: Anthropic (Paid)
+```bash
+MODEL_PROVIDER=anthropic
+ANTHROPIC_API_KEY=your_key_here
+ANTHROPIC_MODEL=claude-sonnet-4-5-20250929
+```
+- Get API key at: https://console.anthropic.com/
+
+### Web Search Configuration
+
+The agent uses **DuckDuckGo** by default (free, no API key needed). Optionally, you can use Tavily:
+
+```bash
+TAVILY_API_KEY=your_tavily_api_key_here  # Optional - free tier: 1000 searches/month
 ```
 
 ## Usage Options

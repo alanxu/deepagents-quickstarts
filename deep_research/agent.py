@@ -52,23 +52,45 @@ research_sub_agent = {
 # Model Gemini 3
 # model = ChatGoogleGenerativeAI(model="gemini-3-pro-preview", temperature=0.0)
 
-# Model Claude 4.5
-# model = init_chat_model(model="anthropic:claude-sonnet-4-5-20250929", temperature=0.0)
+# === Dynamic Model Configuration based on MODEL_PROVIDER ===
+model_provider = os.getenv("MODEL_PROVIDER", "openrouter").lower()
 
-# OpenRouter Free Model (openai/gpt-oss-120b:free)
-model = init_chat_model(
-    model="openai/gpt-oss-120b:free",
-    model_provider="openai",
-    temperature=0.0,
-    api_key=os.getenv("OPENAI_API_KEY"),
-    base_url="https://openrouter.ai/api/v1",
-    model_kwargs={
-        "extra_headers": {
-            "HTTP-Referer": "https://github.com/alanxu/deepagents-quickstarts",
-            "X-Title": "Deep Research Agent",
-        }
-    },
-)
+if model_provider == "ollama":
+    # Ollama (Local/Free)
+    from langchain_ollama import ChatOllama
+
+    model = ChatOllama(
+        model=os.getenv("OLLAMA_MODEL", "llama3.2"),
+        base_url=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"),
+        temperature=0.0,
+    )
+    print(f"✓ Using Ollama model: {os.getenv('OLLAMA_MODEL', 'llama3.2')}")
+
+elif model_provider == "anthropic":
+    # Anthropic Claude (Paid)
+    model = init_chat_model(
+        model=f"anthropic:{os.getenv('ANTHROPIC_MODEL', 'claude-sonnet-4-5-20250929')}",
+        temperature=0.0,
+    )
+    print(f"✓ Using Anthropic model: {os.getenv('ANTHROPIC_MODEL', 'claude-sonnet-4-5-20250929')}")
+
+else:  # Default to openrouter
+    # OpenRouter (Free or Paid models)
+    model = init_chat_model(
+        model=os.getenv("OPENROUTER_MODEL", "openai/gpt-oss-120b:free"),
+        model_provider="openai",
+        temperature=0.0,
+        api_key=os.getenv("OPENROUTER_API_KEY"),
+        base_url="https://openrouter.ai/api/v1",
+        model_kwargs={
+            "extra_headers": {
+                "HTTP-Referer": "https://github.com/alanxu/deepagents-quickstarts",
+                "X-Title": "Deep Research Agent",
+            }
+        },
+    )
+    print(f"✓ Using OpenRouter model: {os.getenv('OPENROUTER_MODEL', 'openai/gpt-oss-120b:free')}")
+
 
 # Create the agent
 agent = create_deep_agent(
