@@ -43,8 +43,8 @@ INSTRUCTIONS = (
 
 # Create research sub-agent
 research_sub_agent = {
-    "name": "research-agent",
-    "description": "Delegate research to the sub-agent researcher. Only give this researcher one topic at a time.",
+    "name": "researcher",
+    "description": "Delegate research tasks to this researcher sub-agent. Use this for conducting web searches and gathering information. Only give this researcher one specific topic at a time.",
     "system_prompt": RESEARCHER_INSTRUCTIONS.format(date=current_date),
     "tools": [tavily_search, think_tool],
 }
@@ -93,9 +93,18 @@ else:  # Default to openrouter
 
 
 # Create the agent
+# OPTION 1: Main agent delegates to subagents (recommended for proper multi-agent workflow)
 agent = create_deep_agent(
     model=model,
-    tools=[tavily_search, think_tool],
+    tools=[],  # Main agent has no custom tools - only built-in file/planning tools
     system_prompt=INSTRUCTIONS,
     subagents=[research_sub_agent],
 )
+
+# OPTION 2: Main agent can use search tools directly (commented out)
+# agent = create_deep_agent(
+#     model=model,
+#     tools=[tavily_search, think_tool],  # Direct access to search tools
+#     system_prompt=INSTRUCTIONS,
+#     subagents=[research_sub_agent],
+# )

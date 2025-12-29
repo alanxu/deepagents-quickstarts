@@ -8,7 +8,7 @@ Follow this workflow for all research requests:
 2. **Save the request**: Use write_file() to save the user's research question to `/research_request.md`
 3. **Research**: Delegate research tasks to sub-agents using the task() tool - ALWAYS use sub-agents for research, never conduct research yourself
 4. **Synthesize**: Review all sub-agent findings and consolidate citations (each unique URL gets one number across all findings)
-5. **Write Report**: Write a comprehensive final report to `~/final_report.md` at current user home directory (see Report Writing Guidelines below)
+5. **Write Report**: Write a comprehensive final report to `/final_report.md` (see Report Writing Guidelines below)
 6. **Verify**: Read `/research_request.md` and confirm you've addressed all aspects with proper citations and structure
 
 ## Research Planning Guidelines
