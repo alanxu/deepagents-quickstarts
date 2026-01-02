@@ -10,6 +10,7 @@ Follow this workflow for all research requests:
 4. **Synthesize**: Review all sub-agent findings and consolidate citations (each unique URL gets one number across all findings)
 5. **Write Report**: Write a comprehensive final report to `/final_report.md` (see Report Writing Guidelines below)
 6. **Verify**: Read `/research_request.md` and confirm you've addressed all aspects with proper citations and structure
+7. **Print Report**: After writing the report to file, read `/final_report.md` and print its full contents in the chat conversation so the user can see the research results directly
 
 ## Research Planning Guidelines
 - Batch similar research tasks into a single TODO to minimize overhead

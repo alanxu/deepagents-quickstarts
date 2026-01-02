@@ -11,9 +11,44 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
+import langchain
+import logging
+
+# Enable debug mode to see raw LLM responses
+langchain.debug = True
+
+# Configure logging to show more details
+logging.basicConfig(level=logging.DEBUG)
+logging.getLogger("langchain").setLevel(logging.DEBUG)
+logging.getLogger("langgraph").setLevel(logging.DEBUG)
+
 from langchain.chat_models import init_chat_model
 from langchain_google_genai import ChatGoogleGenerativeAI
 from deepagents import create_deep_agent
+from langchain_core.callbacks.base import BaseCallbackHandler
+
+# Custom callback to print raw LLM responses
+class RawResponseLogger(BaseCallbackHandler):
+    def on_llm_start(self, serialized, prompts, **kwargs):
+        print("\n" + "="*80)
+        print("🔵 RAW LLM INPUT:")
+        print("="*80)
+        for prompt in prompts:
+            print(prompt)
+        print("="*80 + "\n")
+
+    def on_llm_end(self, response, **kwargs):
+        print("\n" + "="*80)
+        print("🟢 RAW LLM OUTPUT:")
+        print("="*80)
+        print(response)
+        print("\nGenerations:")
+        for gen in response.generations:
+            print(gen)
+        if hasattr(response, 'llm_output') and response.llm_output:
+            print("\nLLM Output metadata:")
+            print(response.llm_output)
+        print("="*80 + "\n")
 
 from research_agent.prompts import (
     RESEARCHER_INSTRUCTIONS,
@@ -55,6 +90,9 @@ research_sub_agent = {
 # === Dynamic Model Configuration based on MODEL_PROVIDER ===
 model_provider = os.getenv("MODEL_PROVIDER", "openrouter").lower()
 
+# Initialize callback for raw response logging
+raw_logger = RawResponseLogger()
+
 if model_provider == "ollama":
     # Ollama (Local/Free)
     from langchain_ollama import ChatOllama
@@ -63,6 +101,7 @@ if model_provider == "ollama":
         model=os.getenv("OLLAMA_MODEL", "llama3.2"),
         base_url=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"),
         temperature=0.0,
+        # callbacks=[raw_logger],
     )
     print(f"✓ Using Ollama model: {os.getenv('OLLAMA_MODEL', 'llama3.2')}")
 
@@ -72,6 +111,8 @@ elif model_provider == "anthropic":
         model=f"anthropic:{os.getenv('ANTHROPIC_MODEL', 'claude-sonnet-4-5-20250929')}",
         temperature=0.0,
     )
+    # Add callbacks after initialization
+    # model.callbacks = [raw_logger]
     print(f"✓ Using Anthropic model: {os.getenv('ANTHROPIC_MODEL', 'claude-sonnet-4-5-20250929')}")
 
 else:  # Default to openrouter
@@ -89,6 +130,8 @@ else:  # Default to openrouter
             }
         },
     )
+    # Add callbacks after initialization
+    # model.callbacks = [raw_logger]
     print(f"✓ Using OpenRouter model: {os.getenv('OPENROUTER_MODEL', 'openai/gpt-oss-120b:free')}")
 
 
